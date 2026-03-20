@@ -5,7 +5,7 @@ export default function Lobby(props) {
     const [messages, setMessages] = useState([]);
     const [currentMessage, setCurrentMessage] = useState('');
 
-    const [players, setPlayers] = useState([props.lobbyData.playerName]);
+    const [players, setPlayers] = useState(props.lobbyData.initialPlayers);
 
     useEffect(function() {
         function handleReceiveMessage(newMessage) {
@@ -15,10 +15,10 @@ export default function Lobby(props) {
             });
         }
 
-        // Die Funktion benennen, damit sie sauber verwendet und aufgeräumt werden kann
         function handleLobbyUpdate(roomData) {
             const playerNames = roomData.players.map(function(player) {
-                return player.playerName; 
+                // Hier ebenfalls die sichere Abfrage einbauen
+                return player.playerName || player.name || player; 
             });
             setPlayers(playerNames);
         }
@@ -63,7 +63,7 @@ export default function Lobby(props) {
     return (
         <div>
             <button onClick={copyLink} style={{ marginBottom: '20px' }}>
-                Einladungs-Link kopieren
+            Einladungs-Link kopieren
             </button>
             <h2>Lobby: {props.lobbyData.lobbyId}</h2>
 
