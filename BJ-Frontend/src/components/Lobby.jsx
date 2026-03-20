@@ -3,7 +3,7 @@ import { socket } from '../socket';
 
 export default function Lobby(props) {
     const [messages, setMessages] = useState([]);
-    const [currentMessage, setCurrentMessage] = useState([]);
+    const [currentMessage, setCurrentMessage] = useState('');
 
     const [players, setPlayers] = useState([props.lobbyData.playerName]);
 
@@ -15,16 +15,22 @@ export default function Lobby(props) {
             });
         }
 
-        function handleUpdatePlayers(playerList) {
-            setPlayers(playerList);
+        // Die Funktion benennen, damit sie sauber verwendet und aufgeräumt werden kann
+        function handleLobbyUpdate(roomData) {
+            const playerNames = roomData.players.map(function(player) {
+                return player.playerName; 
+            });
+            setPlayers(playerNames);
         }
 
+        // Ereignisse anmelden
         socket.on('receive_message', handleReceiveMessage);
-        socket.on('update_players', handleUpdatePlayers);
+        socket.on('lobby_update', handleLobbyUpdate);
 
         function cleanupSocket() {
+            // Ereignisse exakt mit demselben Namen wieder abmelden
             socket.off('receive_message', handleReceiveMessage);
-            socket.off('update_players', handleUpdatePlayers);
+            socket.off('lobby_update', handleLobbyUpdate);
         }
 
         return cleanupSocket;
@@ -47,8 +53,18 @@ export default function Lobby(props) {
         }
     }
 
+    function copyLink() {
+        const shareLink = window.location.origin + '?lobby=' + props.lobbyData.lobbyId;
+        navigator.clipboard.writeText(shareLink);
+        alert('Link wurde Kopiert: ' + shareLink);
+    }
+
+
     return (
         <div>
+            <button onClick={copyLink} style={{ marginBottom: '20px' }}>
+                Einladungs-Link kopieren
+            </button>
             <h2>Lobby: {props.lobbyData.lobbyId}</h2>
 
             <div style ={{ border: '1px solid black', padding: '10px', marginBottom: '20px', width: '300px' }}>
