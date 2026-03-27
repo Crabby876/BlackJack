@@ -32,7 +32,7 @@ app.use('/game', require('./routes/game'));
 
 // React Build servieren (nach den API-Routen!)
 app.use(express.static(path.join(__dirname, '../BJ-Frontend/dist')));
-app.get('*', (req, res) => {
+app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, '../BJ-Frontend/dist', 'index.html'));
 });
 
