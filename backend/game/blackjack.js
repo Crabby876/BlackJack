@@ -1,7 +1,10 @@
-const { createAndShuffleDeck, drawCard } = require('./deck'); 
 
-// Ace = 11 or 1 depending on situation
-function calculateScore(cards) {
+
+import { createAndShuffleDeck, drawCard } from './deck.js';
+
+// --- HILFSFUNKTIONEN ---
+
+export function calculateScore(cards) {
   let score = 0;
   let aces = 0;
   
@@ -16,7 +19,7 @@ function calculateScore(cards) {
     }
   }
   
-  // Reduce Ace value to 1 if score is over 21
+  // Ass auf 1 reduzieren, wenn man sich sonst überkauft (Bust)
   while (score > 21 && aces > 0) {
     score -= 10;
     aces--;
@@ -25,8 +28,32 @@ function calculateScore(cards) {
   return score;
 }
 
-// Initialize game - all players + dealer get 2 cards
-function initGame(players, numberOfDecks = 1) {
+export function checkAllPlayersDone(gameState) {
+  for (const playerId in gameState.playerHands) {
+    if (!gameState.playerHands[playerId].isStand) {
+      return false; 
+    }
+  }
+  return true; 
+}
+
+// Wechselt zum nächsten Spieler oder zum Dealer
+export function advanceTurn(gameState) {
+  gameState.currentTurnIndex++; 
+  
+  if (gameState.currentTurnIndex < gameState.turnOrder.length) {
+    // Der nächste Spieler ist dran
+    gameState.currentPlayerId = gameState.turnOrder[gameState.currentTurnIndex];
+  } else {
+    // Alle Spieler sind durch -> Der Dealer ist automatisch an der Reihe
+    dealerPlay(gameState); 
+  }
+}
+
+
+// --- HAUPTFUNKTIONEN (API FÜR DAS SPIEL) ---
+
+export function initGame(players, numberOfDecks = 1) {
   const deck = createAndShuffleDeck(numberOfDecks);
   const playerHands = {};
 
@@ -55,51 +82,56 @@ function initGame(players, numberOfDecks = 1) {
     hasBlackjack: dealerScore === 21
   };
   
+  const turnOrder = players.map(player => player.id);
+
   return { 
     deck, 
     playerHands, 
     dealer,
-    status: 'playing' 
+    status: 'playing',
+    turnOrder: turnOrder,             
+    currentTurnIndex: 0,              
+    currentPlayerId: turnOrder.length > 0 ? turnOrder[0] : null     
   };
 }
 
-// Player draws a card (Hit)
-function playerHit(gameState, playerId) {
-  if (gameState.playerHands[playerId].isStand || gameState.playerHands[playerId].isBust) {
-    return gameState; 
-  }
+export function playerHit(gameState, playerId) {
+  // Check: Ist der Spieler dran?
+  if (gameState.currentPlayerId !== playerId) return gameState; 
 
+  const player = gameState.playerHands[playerId];
+
+  // Check: Darf er noch ziehen?
+  if (player.isStand || player.isBust) return gameState; 
+
+  // Karte ziehen
   const card = drawCard(gameState.deck);
-  gameState.playerHands[playerId].cards.push(card);
-  gameState.playerHands[playerId].score = calculateScore(gameState.playerHands[playerId].cards);
+  player.cards.push(card);
+  player.score = calculateScore(player.cards);
   
-  if (gameState.playerHands[playerId].score > 21) {
-    gameState.playerHands[playerId].isBust = true;
-    gameState.playerHands[playerId].isStand = true; 
+  // Auto-Bust oder 21 erreicht -> Zug automatisch beenden
+  if (player.score >= 21) {
+    if (player.score > 21) player.isBust = true;
+    player.isStand = true; 
+    advanceTurn(gameState);
   }
   
   return gameState;
 }
 
-// Player stands
-function playerStand(gameState, playerId) {
+export function playerStand(gameState, playerId) {
+  // Check: Ist der Spieler dran?
+  if (gameState.currentPlayerId !== playerId) return gameState;
+
   gameState.playerHands[playerId].isStand = true;
+  advanceTurn(gameState);
+  
   return gameState;
 }
 
-// Check if all players are done (Bust or Stand)
-function checkAllPlayersDone(gameState) {
-  for (const playerId in gameState.playerHands) {
-    if (!gameState.playerHands[playerId].isStand) {
-      return false; 
-    }
-  }
-  return true; 
-}
-
-// Dealer draws until 17
-function dealerPlay(gameState) {
+export function dealerPlay(gameState) {
   gameState.status = 'dealerTurn'; 
+  gameState.currentPlayerId = 'dealer'; 
 
   while (gameState.dealer.score < 17) {
     const card = drawCard(gameState.deck);
@@ -115,8 +147,7 @@ function dealerPlay(gameState) {
   return gameState;
 }
 
-// Determine winners using standard English casino terms
-function getWinners(gameState) {
+export function getWinners(gameState) {
   const results = {};
   const dealer = gameState.dealer;
   
@@ -126,7 +157,7 @@ function getWinners(gameState) {
     if (player.isBust) {
       results[playerId] = 'loss';
     } else if (player.hasBlackjack && !dealer.hasBlackjack) {
-      results[playerId] = 'blackjack'; // Pays 3:2 normally
+      results[playerId] = 'blackjack'; 
     } else if (dealer.hasBlackjack && !player.hasBlackjack) {
        results[playerId] = 'loss';
     } else if (dealer.isBust) {
@@ -134,7 +165,7 @@ function getWinners(gameState) {
     } else if (player.score > dealer.score) {
       results[playerId] = 'win';
     } else if (player.score === dealer.score) {
-      results[playerId] = 'push'; // Standard term for tie
+      results[playerId] = 'push'; 
     } else {
       results[playerId] = 'loss';
     }
@@ -142,13 +173,3 @@ function getWinners(gameState) {
   
   return results;
 }
-
-module.exports = { 
-  initGame, 
-  playerHit, 
-  playerStand, 
-  checkAllPlayersDone, 
-  dealerPlay, 
-  getWinners, 
-  calculateScore 
-};
