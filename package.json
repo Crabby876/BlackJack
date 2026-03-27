@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "build": "cd BJ-Frontend && npm install && npm run build",
+    "start": "cd backend && npm install && node index.js"
+  },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
     "tailwindcss": "^4.2.1"
