@@ -5,6 +5,6 @@ This project is an interactive, real-time Blackjack application designed specifi
 
 This project was developed as a collaborative group effort by three people.
 
-Test it now at [https://blackjacck21-dubwbnf2eyhjd4b0.swedencentral-01.azurewebsites.net/]
+Test it now at https://blackjacck21-dubwbnf2eyhjd4b0.swedencentral-01.azurewebsites.net/
 
 
