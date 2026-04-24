@@ -27,6 +27,4 @@ class Player {
 }
 
 // Exportieren der Klasse, damit andere Dateien sie nutzen können
-export default Player; 
-// Falls ihr noch CommonJS nutzt (require), nimm stattdessen: 
-// module.exports = Player;
+module.exports = Player;
