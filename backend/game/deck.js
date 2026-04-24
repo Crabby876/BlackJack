@@ -3,7 +3,7 @@ const values = [
   "2", "3", "4", "5", "6", "7", "8", "9", "10", 
   "Jack", "Queen", "King", "Ace"
 ];
-export const createAndShuffleDeck = (numberOfDecks = 1) => {
+const createAndShuffleDeck = (numberOfDecks = 1) => {
   let fullDeck = [];
 
   //  Karten generieren (Mehrere Kartensätze)
@@ -29,6 +29,8 @@ export const createAndShuffleDeck = (numberOfDecks = 1) => {
 };
 
 // Zieht die oberste Karte vom Stapel
-export const drawCard = (deck) => {
+const drawCard = (deck) => {
   return deck.pop(); 
 };
+
+module.exports = { createAndShuffleDeck, drawCard };
